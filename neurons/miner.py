@@ -2,14 +2,14 @@
 # Copyright © 2023 Nikita Dilman
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
-# documentation files (the “Software”), to deal in the Software without restriction, including without limitation
+# documentation files (the "Software"), to deal in the Software without restriction, including without limitation
 # the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
 # and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
 # The above copyright notice and this permission notice shall be included in all copies or substantial portions of
 # the Software.
 
-# THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
 # THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
 # THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
@@ -63,40 +63,35 @@ class Miner(BaseMinerNeuron):
         self, synapse: detection.protocol.TextSynapse
     ) -> detection.protocol.TextSynapse:
         """
-        Processes the incoming 'TextSynapse' synapse by performing a predefined operation on the input data.
-        This method should be replaced with actual logic relevant to the miner's purpose.
-
+        Minimal implementation that returns a dummy response in the correct format.
+        
         Args:
             synapse (detection.protocol.TextSynapse): The synapse object containing the 'texts' data.
 
         Returns:
-            detection.protocol.TextSynapse: The synapse object with the 'predictions'.
-
-        The 'forward' function is a placeholder and should be overridden with logic that is appropriate for
-        the miner's intended operation. This method demonstrates a basic transformation of input data.
+            detection.protocol.TextSynapse: The synapse object with dummy 'predictions'.
         """
+        # Log the start time
         start_time = time.time()
-
-        # Check if the validators version is correct
-        version_check = is_version_in_range(synapse.version, self.version, self.least_acceptable_version)
-
-        if not version_check:
-            return synapse
-
+        
+        # Get the input texts
         input_data = synapse.texts
-        bt.logging.info(f"Amount of texts recieved: {len(input_data)}")
-
-        try:
-            preds = self.model.predict_batch(input_data)
-        except Exception as e:
-            bt.logging.error('Couldnt proceed text "{}..."'.format(input_data))
-            bt.logging.error(e)
-            preds = [0] * len(input_data)
-
-        preds = [[pred] * len(text.split()) for pred, text in zip(preds, input_data)]
-        bt.logging.info(f"Made predictions in {int(time.time() - start_time)}s")
-
-        synapse.predictions = preds
+        bt.logging.info(f"Amount of texts received: {len(input_data)}")
+        
+        # Create dummy predictions (0 for human, 1 for AI)
+        # Each text gets a random prediction (0 or 1)
+        # Each word in the text gets the same prediction
+        dummy_preds = [random.randint(0, 1) for _ in range(len(input_data))]
+        
+        # Format predictions as required: list of lists where each inner list
+        # has the same prediction repeated for each word in the text
+        formatted_preds = [[pred] * len(text.split()) for pred, text in zip(dummy_preds, input_data)]
+        
+        bt.logging.info(f"Generated dummy predictions in {int(time.time() - start_time)}s")
+        
+        # Set the predictions in the synapse
+        synapse.predictions = formatted_preds
+        
         return synapse
 
 
@@ -132,26 +127,26 @@ class Miner(BaseMinerNeuron):
 
         Otherwise, allow the request to be processed further.
         """
-        if synapse.dendrite.hotkey not in self.metagraph.hotkeys:
-            # Ignore requests from unrecognized entities.
-            bt.logging.trace(
-                f"Blacklisting unrecognized hotkey {synapse.dendrite.hotkey}"
-            )
-            self.blacklist_hotkeys.add(synapse.dendrite.hotkey)
-            bt.logging.info(f'List of blacklisted hotkeys: {self.blacklist_hotkeys}')
-            return True, "Unrecognized hotkey"
+        # if synapse.dendrite.hotkey not in self.metagraph.hotkeys:
+        #     # Ignore requests from unrecognized entities.
+        #     bt.logging.trace(
+        #         f"Blacklisting unrecognized hotkey {synapse.dendrite.hotkey}"
+        #     )
+        #     self.blacklist_hotkeys.add(synapse.dendrite.hotkey)
+        #     bt.logging.info(f'List of blacklisted hotkeys: {self.blacklist_hotkeys}')
+        #     return True, "Unrecognized hotkey"
 
-        uid = self.metagraph.hotkeys.index(synapse.dendrite.hotkey)
+        # uid = self.metagraph.hotkeys.index(synapse.dendrite.hotkey)
 
-        stake = self.metagraph.S[uid].item()
-        if stake < self.config.blacklist.minimum_stake_requirement:
-            self.blacklist_hotkeys.add(synapse.dendrite.hotkey)
-            bt.logging.info(f'List of blacklisted hotkeys: {self.blacklist_hotkeys}')
-            return True, "pubkey stake below min_allowed_stake"
+        # stake = self.metagraph.S[uid].item()
+        # if stake < self.config.blacklist.minimum_stake_requirement:
+        #     self.blacklist_hotkeys.add(synapse.dendrite.hotkey)
+        #     bt.logging.info(f'List of blacklisted hotkeys: {self.blacklist_hotkeys}')
+        #     return True, "pubkey stake below min_allowed_stake"
 
-        bt.logging.trace(
-            f"Not Blacklisting recognized hotkey {synapse.dendrite.hotkey}"
-        )
+        # bt.logging.trace(
+        #     f"Not Blacklisting recognized hotkey {synapse.dendrite.hotkey}"
+        # )
         return False, "Hotkey recognized!"
 
     async def priority(self, synapse: detection.protocol.TextSynapse) -> float:
