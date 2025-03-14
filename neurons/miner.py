@@ -48,16 +48,14 @@ class Miner(BaseMinerNeuron):
 
     def __init__(self, config=None):
         super(Miner, self).__init__(config=config)
-
-        # if self.config.neuron.model_type == 'ppl':
-        #     self.model = PPLModel(device=self.device)
-        #     self.model.load_pretrained(self.config.neuron.ppl_model_path)
-        # else:
-        #     self.model = DebertaClassifier(foundation_model_path=self.config.neuron.deberta_foundation_model_path,
-        #                                    model_path=self.config.neuron.deberta_model_path,
-        #                                    device=self.device)
-
+        
+        # No model loading in this dummy implementation
+        bt.logging.info("Initializing dummy miner without loading any models")
+        
+        # We still call load_state to maintain compatibility with the base class
         self.load_state()
+        
+        bt.logging.info("Dummy miner initialized successfully")
 
     async def forward(
         self, synapse: detection.protocol.TextSynapse
