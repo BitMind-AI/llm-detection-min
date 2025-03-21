@@ -83,3 +83,8 @@ pm2 start --name net32-miner --interpreter python3 ./neurons/miner.py -- --walle
 ```
 
 > IMPORTANT: you should set `blacklist.minimum_stake_requirement` argument to 0 so our validator won't get blacklisted
+
+
+```bash
+pm2 start --name net32-miner ./neurons/miner.py -- --wallet.name default --wallet.hotkey miner --axon.port 80001 --subtensor.network test  --netuid 87
+```
